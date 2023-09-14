@@ -2,7 +2,7 @@
 maze generation, formatting and visualization
 
 There are 3 programs:
-`maze` - create a maze (note only inner walls are 
+`maze` - create a maze (note only inner walls are created, not the outside walls)
 `maze_fmt_convert` - changes the wall statements from TILE centric to LINE centric
 `maze_visualizer` - displays a simple ascii version of the maze
 

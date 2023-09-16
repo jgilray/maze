@@ -1,6 +1,32 @@
-// Simple maze generator, outputs a list of walls
+// Simple maze generator, outputs a list of internal walls
 use clap::Parser;
 use rand::prelude::*;
+
+// custom error type
+#[derive(Debug)]
+struct Error {
+    details: String,
+}
+
+impl Error {
+    fn new(msg: &str) -> Error {
+        Error {
+            details: msg.to_string(),
+        }
+    }
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.details)
+    }
+}
+
+impl std::error::Error for Error {
+    fn description(&self) -> &str {
+        &self.details
+    }
+}
 
 #[derive(Clone, Debug, Copy)]
 struct Point {
@@ -41,8 +67,12 @@ struct Args {
 
     /// approximate percentage of walls to remove,
     /// resulting in a maze which can be solved in more than one way
-    #[arg(long, short, default_value_t = 0.0)]
+    #[arg(long, default_value_t = 0.0)]
     remove_percentage: f64,
+
+    /// Size of optional randomly placed room
+    #[arg(long, default_value_t = 0)]
+    room_size: usize,
 }
 
 struct Maze {
@@ -108,6 +138,11 @@ impl Maze {
             self.cells[b.x][b.y].top_open = true;
         }
     }
+
+    fn remove_all_walls_from_cell(&mut self, rc: Point) {
+        self.cells[rc.x][rc.y].top_open = true;
+        self.cells[rc.x][rc.y].left_open = true;
+    }
 }
 
 fn get_neighbor(candidate: Point, n: usize) -> Point {
@@ -134,7 +169,7 @@ fn get_neighbor(candidate: Point, n: usize) -> Point {
     neighbor
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
     // initialize maze with all walls in place
@@ -147,9 +182,26 @@ fn main() {
     };
     m.recursive_build(start);
 
+    // optionally create a room
+    if args.room_size > 0 {
+        if args.room_size > args.height - 3 || args.room_size > args.width - 3 {
+            return Err(Box::new(Error::new("room size too large for maze")));
+        } else {
+            let xs = m.rng.gen_range(2..(args.width - args.room_size));
+            let ys = m.rng.gen_range(2..(args.height - args.room_size));
+
+            for x in xs..(xs + args.room_size) {
+                for y in ys..(ys + args.room_size) {
+                    let rc = Point { x, y };
+                    m.remove_all_walls_from_cell(rc);
+                }
+            }
+        }
+    }
+
     // print out walls still remaining - optionally skipping some walls
-    // assuming that there are about (0.9 x width x height) internal walls
-    let range = 0.9 * args.width as f64 * args.height as f64;
+    let mut range = 0.9 * args.width as f64 * args.height as f64;
+    range -= (args.room_size * args.room_size) as f64;
     let limit = (range * args.remove_percentage / 100.0) as usize;
     dbg!(range, limit);
     for i in 0..m.cells.len() {
@@ -165,4 +217,6 @@ fn main() {
             }
         }
     }
+
+    Ok(())
 }

@@ -11,9 +11,9 @@ To create a 20 x 10 maze with a single path between any two points in TILE centr
 maze --width 20 --height 10 > m1.maze
 ```
 
-To create a 20 x 10 maze with approximately 15% of the inner walls removed in LINE centric format:
+To create a 20 x 10 maze with approximately 15% of the inner walls removed in LINE centric format with a 3x3 room randomly placed inside the maze:
 ```
-maze --width 20 --height 10 --remove-percentage 15.0 | maze_fmt_convert > m2.maze
+maze --width 20 --height 10 --remove-percentage 15.0 --room-size 3 | maze_fmt_convert > m2.maze
 ```
 
 To display m2.maze in a terminal:

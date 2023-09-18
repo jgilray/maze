@@ -63,7 +63,7 @@ fn paint_close_wall(is_horiz: bool) {
 }
 
 // Displays a whole row of walls
-fn paint_row(is_horiz: bool, idx: usize, walls: &Vec<Vec<bool>>) {
+fn paint_row(is_horiz: bool, idx: usize, walls: &[Vec<bool>]) {
     for w in walls[idx].iter() {
         paint_wall(is_horiz, *w);
     }
@@ -100,11 +100,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     while reader.read_line(&mut inputstr)? != 0 {
         let instr = inputstr.trim_end().to_string(); // remove CRs at the end each line
         let vw = instr.split(' ').collect::<Vec<&str>>();
-        if vw[0] != "wall" || vw.len() != 5 {
+
+        if args.line {
+            if vw[0] != "wall" || vw.len() != 5 {
+                return Err(Box::new(Error::new(
+                    "bad input, expecting \"wall x1 y1 x2 y2\"",
+                )));
+            }
+        } else if vw[0] != "wall-tile" || vw.len() != 5 {
             return Err(Box::new(Error::new(
-                "bad input, expecting \"wall x1 y1 x2 y2\"",
+                "bad input, expecting \"wall-tile x1 y1 x2 y2\"",
             )));
         }
+
         let x1 = vw[1].parse::<usize>()?;
         let y1 = vw[2].parse::<usize>()?;
         let x2 = vw[3].parse::<usize>()?;

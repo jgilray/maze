@@ -209,10 +209,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let rndnum = m.rng.gen_range(0..range as usize);
             if rndnum >= limit {
                 if !m.cells[i][j].top_open && j > 0 {
-                    println!("wall {} {} {} {}", i, j - 1, i, j);
+                    println!("wall-tile {} {} {} {}", i, j - 1, i, j);
                 }
                 if !m.cells[i][j].left_open && i > 0 {
-                    println!("wall {} {} {} {}", i - 1, j, i, j);
+                    println!("wall-tile {} {} {} {}", i - 1, j, i, j);
                 }
             }
         }

@@ -35,9 +35,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     while reader.read_line(&mut inputstr)? != 0 {
         let instr = inputstr.trim_end().to_string(); // remove CRs at the end each line
         let vw = instr.split(' ').collect::<Vec<&str>>();
-        if vw[0] != "wall" || vw.len() != 5 {
+        if vw[0] != "wall-tile" || vw.len() != 5 {
             return Err(Box::new(Error::new(
-                "bad input, expecting \"wall x1 y1 x2 y2\"",
+                "bad input, expecting \"wall-tile x1 y1 x2 y2\"",
             )));
         }
         let x1 = vw[1].parse::<usize>()?;

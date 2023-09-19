@@ -20,3 +20,8 @@ To display m2.maze in a terminal:
 ```
 maze_visualizer --width 20 --height 10 --line < m2.maze
 ```
+
+To create a maze for the Harp Lab's maze system (this style of maze is 11x11 with many small rooms to make the passages wider)
+```
+maze --harp | maze_fmt_convert > m3.maze
+```

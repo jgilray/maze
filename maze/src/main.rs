@@ -65,14 +65,23 @@ struct Args {
     #[arg(long, default_value_t = 10)]
     height: usize,
 
-    /// approximate percentage of walls to remove,
+    /// Approximate percentage of walls to remove,
     /// resulting in a maze which can be solved in more than one way
     #[arg(long, default_value_t = 0.0)]
     remove_percentage: f64,
 
-    /// Size of optional randomly placed room
+    /// number of randomly placed rooms
+    #[arg(long, default_value_t = 0)]
+    num_rooms: usize,
+
+    /// Size of optional randomly placed rooms
     #[arg(long, default_value_t = 0)]
     room_size: usize,
+
+    /// Option to support harp lab's maze game,
+    /// Overrides all other options
+    #[clap(long, action)]
+    harp: bool,
 }
 
 struct Maze {
@@ -170,40 +179,60 @@ fn get_neighbor(candidate: Point, n: usize) -> Point {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // get arguments to the prograam
     let args = Args::parse();
+    let width;
+    let height;
+    let num_rooms;
+    let room_size;
+    let remove_percentage;
+    if args.harp {
+        // harp lab option is set, overrides all settings
+        width = 11;
+        height = 11;
+        num_rooms = (width + height) / 4;
+        room_size = 2;
+        remove_percentage = 8.0;
+    } else {
+        width = args.width;
+        height = args.height;
+        num_rooms = args.num_rooms;
+        room_size = args.room_size;
+        remove_percentage = args.remove_percentage;
+    }
+
+    if room_size > height - 1 || room_size > width - 1 {
+        return Err(Box::new(Error::new("room size too large for maze")));
+    }
 
     // initialize maze with all walls in place
-    let mut m = Maze::new(args.width, args.height);
+    let mut m = Maze::new(width, height);
 
     // remove random walls starting from a random location
     let start = Point {
-        x: m.rng.gen_range(0..args.width),
-        y: m.rng.gen_range(0..args.height),
+        x: m.rng.gen_range(0..width),
+        y: m.rng.gen_range(0..height),
     };
     m.recursive_build(start);
 
-    // optionally create a room
-    if args.room_size > 0 {
-        if args.room_size > args.height - 3 || args.room_size > args.width - 3 {
-            return Err(Box::new(Error::new("room size too large for maze")));
-        } else {
-            let xs = m.rng.gen_range(2..(args.width - args.room_size));
-            let ys = m.rng.gen_range(2..(args.height - args.room_size));
+    // optionally create rooms
+    for _ in 0..num_rooms {
+        let xs = m.rng.gen_range(1..(width - room_size + 1));
+        let ys = m.rng.gen_range(1..(height - room_size + 1));
 
-            for x in xs..(xs + args.room_size) {
-                for y in ys..(ys + args.room_size) {
-                    let rc = Point { x, y };
-                    m.remove_all_walls_from_cell(rc);
-                }
+        for x in xs..(xs + room_size) {
+            for y in ys..(ys + room_size) {
+                let rc = Point { x, y };
+                m.remove_all_walls_from_cell(rc);
             }
         }
     }
 
     // print out walls still remaining - optionally skipping some walls
-    let mut range = 0.9 * args.width as f64 * args.height as f64;
-    range -= (args.room_size * args.room_size) as f64;
-    let limit = (range * args.remove_percentage / 100.0) as usize;
-    dbg!(range, limit);
+    let mut range = 0.9 * width as f64 * height as f64;
+    range -= (room_size * room_size * num_rooms) as f64;
+    let limit = (range * remove_percentage / 100.0) as usize;
+    dbg!(range, limit, num_rooms, room_size);
     for i in 0..m.cells.len() {
         for j in 0..m.cells[i].len() {
             let rndnum = m.rng.gen_range(0..range as usize);
